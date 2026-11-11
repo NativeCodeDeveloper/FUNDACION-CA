@@ -2,7 +2,6 @@
 
 import { fetchConCarga as fetch } from "@/lib/fetchConCarga";
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Instagram,
@@ -12,16 +11,13 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { construirUrlWhatsApp, normalizarNumeroWhatsApp } from "@/lib/whatsappAgenda";
 
 const CF_BASE = "https://imagedelivery.net/aCBUhLfqUcxA2yhIBn1fNQ";
 
 const fallbackSlides = [
   { id: "fallback-1", image: "/logoagendaclinica.png", alt: "Centro Médico", titulo: "", descripcion: "" },
 ];
-
-function normalizeWhatsAppNumber(phone) {
-  return String(phone || "").replace(/[^\d]/g, "");
-}
 
 export default function Portada() {
   const [dataPortada, setDataPortada] = useState([]);
@@ -136,12 +132,17 @@ export default function Portada() {
 
   const currentSlide = safeSlides[activeIndex] ?? fallbackSlides[0];
   const whatsappNumber = datosEmpresa?.contactoWhatsapp || datosEmpresa?.contactoTelefono || "";
+  // Sin numero configurado los botones de agendar vuelven a /agendaProfesionales.
+  const urlAgendarWhatsApp = construirUrlWhatsApp(whatsappNumber);
+  const propiedadesWhatsApp = urlAgendarWhatsApp
+    ? { target: "_blank", rel: "noopener noreferrer" }
+    : {};
   const socialLinks = [
     { icon: Instagram, href: datosEmpresa?.socialInstagramUrl, label: "Instagram" },
     { icon: Facebook, href: datosEmpresa?.socialFacebookUrl, label: "Facebook" },
     {
       icon: MessageCircle,
-      href: whatsappNumber ? `https://wa.me/${normalizeWhatsAppNumber(whatsappNumber)}` : "",
+      href: whatsappNumber ? `https://wa.me/${normalizarNumeroWhatsApp(whatsappNumber)}` : "",
       label: "WhatsApp",
     },
   ].filter((item) => item.href);
@@ -217,12 +218,13 @@ export default function Portada() {
 
                 {/* CTAs */}
                 <div className="flex flex-wrap items-center gap-3 mb-7">
-                  <Link
-                    href="/agendaProfesionales"
+                  <a
+                    href={urlAgendarWhatsApp || "/agendaProfesionales"}
+                    {...propiedadesWhatsApp}
                     className="inline-flex items-center rounded-full bg-slate-900 px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-slate-800 hover:scale-[1.02]"
                   >
                     Agendar hora
-                  </Link>
+                  </a>
                   <a
                     href="#sobre-nosotros"
                     className="inline-flex items-center rounded-full border border-slate-200 px-6 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:border-slate-300 hover:text-slate-900"
@@ -304,12 +306,13 @@ export default function Portada() {
                   </p>
                 )}
                 <div className="flex justify-center flex-wrap gap-3 mb-6">
-                  <Link
-                    href="/agendaProfesionales"
+                  <a
+                    href={urlAgendarWhatsApp || "/agendaProfesionales"}
+                    {...propiedadesWhatsApp}
                     className="inline-flex items-center rounded-full bg-slate-900 px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-slate-800"
                   >
                     Agendar hora
-                  </Link>
+                  </a>
                   <a
                     href="#sobre-nosotros"
                     className="inline-flex items-center rounded-full border border-slate-200 px-6 py-2.5 text-sm font-semibold text-slate-700 hover:border-slate-300 hover:text-slate-900 transition-all"

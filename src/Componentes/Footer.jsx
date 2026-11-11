@@ -5,17 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Facebook, Globe, Instagram, Linkedin, Mail, MapPin, MessageCircle, Phone, Shield, Lock, Twitter, Youtube } from "lucide-react";
-
-const navLinks = [
-  { label: "Inicio", href: "#inicio" },
-  { label: "Servicios", href: "#servicios" },
-  { label: "Testimonios", href: "#testimonios" },
-  { label: "Agendar hora", href: "/agendaProfesionales" },
-];
-
-function normalizeWhatsAppNumber(phone) {
-  return String(phone || "").replace(/[^\d]/g, "");
-}
+import { construirUrlWhatsApp, normalizarNumeroWhatsApp } from "@/lib/whatsappAgenda";
 
 function extractIframeSrc(value) {
   const rawValue = String(value || "").trim();
@@ -75,7 +65,7 @@ export default function Footer() {
         companyName: datosEmpresa.empresaNombre || "Agenda Clinica",
         phone: datosEmpresa.contactoTelefono || "",
         whatsappNumber,
-        whatsappUrl: whatsappNumber ? `https://wa.me/${normalizeWhatsAppNumber(whatsappNumber)}` : "",
+        whatsappUrl: whatsappNumber ? `https://wa.me/${normalizarNumeroWhatsApp(whatsappNumber)}` : "",
         email,
         emailUrl: email ? `mailto:${email}` : "",
         address: datosEmpresa.contactoDireccion || "",
@@ -100,6 +90,20 @@ export default function Footer() {
   useEffect(() => {
     cargarDatosEmpresaFooter();
   }, []);
+
+  // "Agendar hora" abre WhatsApp del centro; sin numero configurado vuelve al
+  // agendamiento en linea de siempre.
+  const urlAgendarWhatsApp = construirUrlWhatsApp(publicContact.whatsappNumber);
+  const navLinks = [
+    { label: "Inicio", href: "#inicio" },
+    { label: "Servicios", href: "#servicios" },
+    { label: "Testimonios", href: "#testimonios" },
+    {
+      label: "Agendar hora",
+      href: urlAgendarWhatsApp || "/agendaProfesionales",
+      externo: Boolean(urlAgendarWhatsApp),
+    },
+  ];
 
   const socialLinks = [
     { label: "Instagram", href: publicContact.socials.instagram, icon: Instagram },
@@ -168,6 +172,7 @@ export default function Footer() {
                   <li key={item.label}>
                     <a
                       href={item.href}
+                      {...(item.externo ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                       className="text-slate-400 text-sm transition hover:text-white"
                     >
                       {item.label}

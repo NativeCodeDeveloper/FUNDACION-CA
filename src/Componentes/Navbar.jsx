@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { fetchConCarga as fetch } from "@/lib/fetchConCarga";
+import { construirUrlWhatsApp } from "@/lib/whatsappAgenda";
 
 const navItems = [
   { label: "Inicio", href: "/#inicio" },
@@ -14,6 +16,8 @@ const navItems = [
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [whatsappUrl, setWhatsappUrl] = useState("");
+  const API = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,6 +27,28 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // "Agendar hora" abre WhatsApp del centro. Sin numero configurado el boton
+  // vuelve al agendamiento en linea de siempre.
+  useEffect(() => {
+    async function cargarWhatsappCentro() {
+      try {
+        const res = await fetch(`${API}/datosempresa/seleccionartodos`, {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          mode: "cors",
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const empresa = Array.isArray(data) ? data[0] : data;
+        const numero = empresa?.contactoWhatsapp || empresa?.contactoTelefono || "";
+        setWhatsappUrl(construirUrlWhatsApp(numero));
+      } catch {
+        // silencioso: queda el respaldo /agendaProfesionales
+      }
+    }
+    cargarWhatsappCentro();
+  }, [API]);
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 flex flex-col items-center px-4 pt-4 sm:pt-6 pointer-events-none transition-all duration-300">
@@ -54,13 +80,14 @@ export default function Navbar() {
 
         {/* Action Buttons */}
         <div className="flex shrink-0 items-center justify-end gap-3 sm:gap-4">
-          <Link
-            href="/agendaProfesionales"
+          <a
+            href={whatsappUrl || "/agendaProfesionales"}
             aria-label="Agendar hora"
+            {...(whatsappUrl ? { target: "_blank", rel: "noopener noreferrer" } : {})}
             className="hidden rounded-full bg-slate-900 px-6 py-2.5 text-sm font-bold text-white transition duration-300 hover:bg-slate-800 hover:scale-105 sm:inline-flex"
           >
             Agendar hora
-          </Link>
+          </a>
 
           <button
             type="button"
@@ -92,13 +119,14 @@ export default function Navbar() {
             </Link>
           ))}
           <div className="mt-2 border-t border-slate-100 pt-4">
-            <Link
-              href="/agendaProfesionales"
+            <a
+              href={whatsappUrl || "/agendaProfesionales"}
               onClick={() => setIsOpen(false)}
+              {...(whatsappUrl ? { target: "_blank", rel: "noopener noreferrer" } : {})}
               className="block w-full rounded-2xl bg-slate-900 px-5 py-4 text-center text-[15px] font-bold text-white transition duration-300 hover:bg-slate-800"
             >
               Agendar hora
-            </Link>
+            </a>
           </div>
         </div>
       </div>

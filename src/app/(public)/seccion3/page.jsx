@@ -2,11 +2,11 @@
 
 import { fetchConCarga as fetch } from "@/lib/fetchConCarga";
 import { useEffect, useRef, useState, useCallback } from "react";
-import Link from "next/link";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, CalendarCheck, ArrowRight, BookOpen } from "lucide-react";
 import RevealOnScroll from "@/Componentes/RevealOnScroll";
 import ResenasSection from "@/Componentes/ResenasSection";
+import { construirUrlWhatsApp } from "@/lib/whatsappAgenda";
 
 const CF_BASE = "https://imagedelivery.net/aCBUhLfqUcxA2yhIBn1fNQ";
 const FALLBACK_IMAGE = "/logoagendaclinica.png";
@@ -67,6 +67,7 @@ export default function Seccion3() {
   const [isAtEnd, setIsAtEnd] = useState(false);
   const [listaPublicaciones, setListaPublicaciones] = useState([]);
   const [estadoPublicaciones, setEstadoPublicaciones] = useState("cargando");
+  const [urlAgendarWhatsApp, setUrlAgendarWhatsApp] = useState("");
   const API = process.env.NEXT_PUBLIC_API_URL;
 
   async function listarPublicacionesSeccion3() {
@@ -104,6 +105,32 @@ export default function Seccion3() {
   useEffect(() => {
     listarPublicacionesSeccion3();
   }, []);
+
+  // "Agendar hora" abre WhatsApp del centro. Sin numero configurado el boton
+  // vuelve al agendamiento en linea de siempre.
+  useEffect(() => {
+    async function cargarWhatsappCentro() {
+      try {
+        const res = await fetch(`${API}/datosempresa/seleccionartodos`, {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          mode: "cors",
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const empresa = Array.isArray(data) ? data[0] : data;
+        const numero = empresa?.contactoWhatsapp || empresa?.contactoTelefono || "";
+        setUrlAgendarWhatsApp(construirUrlWhatsApp(numero));
+      } catch {
+        // silencioso: queda el respaldo /agendaProfesionales
+      }
+    }
+    cargarWhatsappCentro();
+  }, [API]);
+
+  const propiedadesWhatsApp = urlAgendarWhatsApp
+    ? { target: "_blank", rel: "noopener noreferrer" }
+    : {};
 
   const publicaciones = listaPublicaciones.map((p, i) => ({
     id: p.id_publicaciones ?? i,
@@ -165,13 +192,14 @@ export default function Seccion3() {
                   <p className="mt-2 text-sm text-slate-500 leading-relaxed">
                     Casos clínicos, tratamientos y novedades que este centro comparte para que llegues informado a tu consulta.
                   </p>
-                  <Link
-                    href="/agendaProfesionales"
+                  <a
+                    href={urlAgendarWhatsApp || "/agendaProfesionales"}
+                    {...propiedadesWhatsApp}
                     className="mt-6 inline-flex items-center gap-2 rounded-full bg-slate-900 px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-slate-800 hover:scale-[1.02] w-full max-w-xs justify-center lg:w-auto"
                   >
                     Agendar hora
                     <ArrowRight className="h-4 w-4" />
-                  </Link>
+                  </a>
                 </div>
 
                 {/* ── Right: carousel ───────────────────────── */}
@@ -247,12 +275,13 @@ export default function Seccion3() {
                 <p className="mx-auto max-w-xl text-lg text-slate-300 mb-10">
                   Agenda en línea las 24 horas, sin llamadas ni esperas. Elige el profesional, el día y la hora que mejor se adapte a ti.
                 </p>
-                <Link
-                  href="/agendaProfesionales"
+                <a
+                  href={urlAgendarWhatsApp || "/agendaProfesionales"}
+                  {...propiedadesWhatsApp}
                   className="inline-flex rounded-full bg-white px-8 py-4 font-bold text-slate-900 transition hover:bg-slate-50 hover:scale-105"
                 >
                   Agendar mi hora
-                </Link>
+                </a>
               </div>
             </div>
           </RevealOnScroll>
