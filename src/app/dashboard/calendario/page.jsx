@@ -32,8 +32,8 @@ import { hoyCivil } from "@/lib/fechas";
 dayjs.locale("es");
 const localizer = dayjsLocalizer(dayjs);
 const DnDCalendar = withDragAndDrop(Calendar);
-const HORA_MINIMA_AGENDA = 8;
-const HORA_MAXIMA_AGENDA = 23;
+const HORA_MINIMA_AGENDA = 9;
+const HORA_MAXIMA_AGENDA = 19 + 50 / 60;
 
 function crearHoraLimite(hora, minuto = 0, segundo = 0) {
     const fecha = new Date();
@@ -1033,7 +1033,7 @@ function CalendarioContent() {
         }
 
         if (!estaDentroHorarioAgenda(nuevoInicio, nuevoFin)) {
-            toast.error("Horario fuera del rango permitido (08:00 – 23:00).");
+            toast.error("Horario fuera del rango permitido (09:00 – 19:50).");
             return;
         }
 
@@ -1053,7 +1053,7 @@ function CalendarioContent() {
         nuevoFin.setFullYear(year, month - 1, day);
 
         if (!estaDentroHorarioAgenda(nuevoInicio, nuevoFin)) {
-            toast.error("Solo puedes agendar entre 08:00 y 23:00 horas, con un rango valido.");
+            toast.error("Solo puedes agendar entre 09:00 y 19:50 horas, con un rango valido.");
             return;
         }
 
@@ -1094,7 +1094,7 @@ function CalendarioContent() {
         if (!estaDentroHorarioAgenda(start, end)) {
             if (!selectionGuardRef.current.outOfHours) {
                 selectionGuardRef.current.outOfHours = true;
-                toast.error("Solo puedes agendar entre 08:00 y 23:00 horas.");
+                toast.error("Solo puedes agendar entre 09:00 y 19:50 horas.");
                 setTimeout(() => {
                     selectionGuardRef.current.outOfHours = false;
                 }, 1200);
@@ -1290,7 +1290,7 @@ function CalendarioContent() {
                 return false;
             }
             if (!estaDentroHorarioAgenda(inicio, final)) {
-                toast.error("Solo puedes agendar entre 08:00 y 23:00 horas.");
+                toast.error("Solo puedes agendar entre 09:00 y 19:50 horas.");
                 return false;
             }
             if (final < inicio) {
@@ -1559,7 +1559,7 @@ function CalendarioContent() {
             const inicio = new Date(`${fechaInicio}T${horaInicio}`);
             const final = new Date(`${fechaFinalizacion}T${horaFinalizacion}`);
             if (!estaDentroHorarioAgenda(inicio, final)) {
-                return toast.error("Solo puedes bloquear horarios entre 08:00 y 23:00 horas.");
+                return toast.error("Solo puedes bloquear horarios entre 09:00 y 19:50 horas.");
             }
 
             const res = await fetch(`${API}/bloqueoAgenda/InsertarBloqueo`, {
@@ -2359,23 +2359,15 @@ function CalendarioContent() {
                             type="button"
                             onClick={() => {
                                 const ahora = new Date();
-                                const h = ahora.getHours();
-                                const m = ahora.getMinutes();
-
-                                // Próximo slot de 30 min redondeado hacia arriba
-                                let sH = m < 30 ? h : h + 1;
-                                let sM = m < 30 ? 30 : 0;
-
-                                // Si cae fuera del rango 8:00–22:30, usar mañana 09:00
-                                const fueraDiRango = sH < HORA_MINIMA_AGENDA || sH > 22 || (sH === 22 && sM > 30);
                                 const inicio = new Date(ahora);
-                                if (fueraDiRango) {
+                                inicio.setHours(HORA_MINIMA_AGENDA, 0, 0, 0);
+                                const bloquesTranscurridos = Math.max(0, Math.ceil((ahora - inicio) / (50 * 60000)));
+                                inicio.setMinutes(inicio.getMinutes() + bloquesTranscurridos * 50);
+                                if (inicio.getHours() * 60 + inicio.getMinutes() + 50 > HORA_MAXIMA_AGENDA * 60) {
                                     inicio.setDate(inicio.getDate() + 1);
-                                    inicio.setHours(9, 0, 0, 0);
-                                } else {
-                                    inicio.setHours(sH, sM, 0, 0);
+                                    inicio.setHours(HORA_MINIMA_AGENDA, 0, 0, 0);
                                 }
-                                const fin = new Date(inicio.getTime() + 30 * 60000);
+                                const fin = new Date(inicio.getTime() + 50 * 60000);
                                 abrirPopupSeleccion({ start: inicio, end: fin, bounds: null });
                             }}
                             className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:shadow-md active:scale-[0.98] sm:w-auto sm:min-w-[180px]" style={{ backgroundColor: "#6E56CF" }}
@@ -2634,7 +2626,7 @@ function CalendarioContent() {
                                 setMonthPopover({ events: evs, date, x: lastClickPos.current.x, y: lastClickPos.current.y });
                             }}
                             min={crearHoraLimite(HORA_MINIMA_AGENDA)}
-                            max={crearHoraLimite(HORA_MAXIMA_AGENDA)}
+                            max={crearHoraLimite(19, 50)}
                             scrollToTime={crearHoraLimite(HORA_MINIMA_AGENDA)}
                             step={50}
                             timeslots={1}
