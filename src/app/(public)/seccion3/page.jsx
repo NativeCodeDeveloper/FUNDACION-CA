@@ -164,7 +164,7 @@ export default function Seccion3() {
 
   return (
     <>
-      <section id="publicaciones" className="scroll-mt-24 bg-white py-20 sm:py-28">
+      <section id="publicaciones" className="hidden scroll-mt-24 bg-white py-20 sm:py-28">
         <div className="mx-auto w-full max-w-7xl px-5 md:px-8 lg:px-10">
           <RevealOnScroll>
             <div className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-5 shadow-sm md:p-8">
@@ -261,7 +261,9 @@ export default function Seccion3() {
         </div>
       </section>
 
-      <ResenasSection />
+      <div className="hidden">
+        <ResenasSection />
+      </div>
 
       {/* CTA block */}
       <section id="agenda" className="bg-slate-50 py-16 sm:py-24">
