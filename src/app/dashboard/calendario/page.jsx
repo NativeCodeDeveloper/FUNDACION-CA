@@ -2636,7 +2636,7 @@ function CalendarioContent() {
                             min={crearHoraLimite(HORA_MINIMA_AGENDA)}
                             max={crearHoraLimite(HORA_MAXIMA_AGENDA)}
                             scrollToTime={crearHoraLimite(HORA_MINIMA_AGENDA)}
-                            step={15}
+                            step={50}
                             timeslots={1}
                             draggableAccessor={(event) => event.tipo === "reserva"}
                             resizableAccessor={(event) => event.tipo === "reserva"}
